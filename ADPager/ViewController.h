@@ -7,6 +7,7 @@
 //
 
 #import <UIKit/UIKit.h>
+#import "AdView.h"
 
 @interface ViewController : UIViewController
 
