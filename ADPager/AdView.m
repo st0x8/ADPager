@@ -239,8 +239,8 @@ static CGFloat MaxLabelLength;
 
 - (void)timeToScroll {
     [_scrollView setContentOffset:CGPointMake(ADViewWidth * 2, 0) animated:YES];
-    //切换到右边的图片
-    [NSTimer scheduledTimerWithTimeInterval:0.3f target:self selector:@selector(scrollViewDidEndDecelerating:) userInfo:nil repeats:NO];
+    //切换到右边的图片 Inverval 值 小于0.4小白点和标题滚动会出现延迟
+    [NSTimer scheduledTimerWithTimeInterval:0.4f target:self selector:@selector(scrollViewDidEndDecelerating:) userInfo:nil repeats:NO];
 }
 
 - (void)adViewItemTap {
