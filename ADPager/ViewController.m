@@ -30,8 +30,9 @@
                            @"http://img05.tooopen.com/images/20140612/sl_77081335958.jpg",
                            @"null",
                            @"http://img05.tooopen.com/images/20140612/sl_77091426278.jpg"];
-    
     ADView *adView = [ADView getADViewWithFrame:CGRectMake(0, 100, windowFrame.size.width, windowFrame.size.height * 0.35) localImageURLs:localImages adTitles:titles dotsShowStyle:DotsShowStyleCenter];
+    
+//    ADView *adView = [ADView getADViewWithFrame:CGRectMake(0, 100, windowFrame.size.width, windowFrame.size.height * 0.35) localImageURLs:@[@"Image0.jpg"] adTitles:@[@"Image0.jpg"] dotsShowStyle:DotsShowStyleCenter];
     [self.view addSubview:adView];
     adView.scrollInterval = 3;
     adView.tapCallBack = ^ (NSInteger currentIndex, NSURL *imageURL) {

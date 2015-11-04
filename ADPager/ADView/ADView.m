@@ -12,8 +12,8 @@
 #import "UIImageView+WebCache.h"
 
 
-static CGFloat ADViewWidth;
-static CGFloat ADviewHeight;
+static CGFloat ImageViewWidth;
+static CGFloat ImageViewHeight;
 static CGFloat MaxLabelLength;
 
 @interface ADView () <UIScrollViewDelegate> {
@@ -25,8 +25,6 @@ static CGFloat MaxLabelLength;
     UIPageControl *_dotsView;
     UILabel *_adTitleLabel;
     
-    NSArray *_urlArray;
-    NSArray *_titles;
     NSUInteger _leftImageIndex;
     NSUInteger _centerImageIndex;
     NSUInteger _rightImageIndex;
@@ -34,6 +32,7 @@ static CGFloat MaxLabelLength;
 }
 
 @property (nonatomic, strong) UIImage *placeholderImage;
+@property (nonatomic, strong) NSArray *urlArray;
 @property (nonatomic, strong) NSArray *titles;
 @property (nonatomic, strong) NSTimer *scrollTimer;
 @end
@@ -44,27 +43,27 @@ static CGFloat MaxLabelLength;
     if (self = [super initWithFrame:frame]) {
         _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
         
-        ADViewWidth = _scrollView.bounds.size.width;
-        ADviewHeight = _scrollView.bounds.size.height;
-        MaxLabelLength = ADViewWidth * 0.6;
+        ImageViewWidth = _scrollView.bounds.size.width;
+        ImageViewHeight = _scrollView.bounds.size.height;
+        MaxLabelLength = ImageViewWidth * 0.6;
         _scrollView.bounces = NO;
         _scrollView.showsHorizontalScrollIndicator = NO;
         _scrollView.showsVerticalScrollIndicator = NO;
         _scrollView.pagingEnabled = YES;
-        _scrollView.contentOffset = CGPointMake(ADViewWidth, 0);
-        _scrollView.contentSize = CGSizeMake(ADViewWidth * 3, ADviewHeight);
+        _scrollView.contentOffset = CGPointMake(ImageViewWidth, 0);
+        _scrollView.contentSize = CGSizeMake(ImageViewWidth * 3, ImageViewHeight);
         _scrollView.delegate = self;
         _scrollView.contentInset = UIEdgeInsetsZero;//This statement will change white dots position, if the container have navigation bar, declare this statement, contrary don't.
         
         _scrollView.backgroundColor = [UIColor grayColor];
         
-        _leftImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, ADViewWidth, ADviewHeight)];
+        _leftImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, ImageViewWidth, ImageViewHeight)];
         _leftImageView.contentMode = UIViewContentModeScaleAspectFill;
         _leftImageView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
         _leftImageView.clipsToBounds = YES;
         [_scrollView addSubview: _leftImageView];
         
-        _centerImageView = [[UIImageView alloc] initWithFrame:CGRectMake(ADViewWidth, 0, ADViewWidth, ADviewHeight)];
+        _centerImageView = [[UIImageView alloc] initWithFrame:CGRectMake(ImageViewWidth, 0, ImageViewWidth, ImageViewHeight)];
         _centerImageView.contentMode = UIViewContentModeScaleAspectFill;
         _centerImageView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
         _centerImageView.clipsToBounds = YES;
@@ -72,7 +71,7 @@ static CGFloat MaxLabelLength;
         [_centerImageView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(adViewItemTap)]];
         [_scrollView addSubview: _centerImageView];
         
-        _rightImageView = [[UIImageView alloc] initWithFrame:CGRectMake(ADViewWidth * 2, 0, ADViewWidth, ADviewHeight)];
+        _rightImageView = [[UIImageView alloc] initWithFrame:CGRectMake(ImageViewWidth * 2, 0, ImageViewWidth, ImageViewHeight)];
         _rightImageView.contentMode = UIViewContentModeScaleAspectFill;
         _rightImageView.clipsToBounds = YES;
         [_scrollView addSubview:_rightImageView];
@@ -104,17 +103,15 @@ static CGFloat MaxLabelLength;
     return nil;
 }
 
-#pragma mark - public
+#pragma mark - public methods
 - (void)setLocalImageURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles dotsShowStyle:(DotsShowStyle)dotsShowStyle {
-
     if (titles && imageURLs) {
-        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count and the adTitles'count is not the same.");
-    } else if (!imageURLs) {
-        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil."];
+        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count isn't equal to the adTitles'.");
+    } else if (!imageURLs || imageURLs.count < 1) {
+        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil and it's count must larger than 1."];
     } else if (!titles) {
         self.titles = nil;//purge title's array
     }
-    self.titles = titles;
     NSMutableArray *mutableArray = [NSMutableArray array];
     for (NSString *imageName in imageURLs) {
         NSString *path = [[NSBundle mainBundle] pathForResource:imageName ofType:nil];
@@ -122,35 +119,25 @@ static CGFloat MaxLabelLength;
         NSURL *url = [NSURL fileURLWithPath:path];
         [mutableArray addObject: url];
     }
-    
-    [self setImageURLs:mutableArray];
-    [self setDotsShowStyle:dotsShowStyle];
-    if (self.autoScroll) {
-        [self scrollTimer];
-    }
+    [self setImageURLs:mutableArray adTitles:titles dotsShowStyle:dotsShowStyle];
 }
 
 - (void)setImageLinkURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles placeHolderImageName:(NSString *)imageName dotsShowStyle:(DotsShowStyle)dotsShowStyle {
     if (titles && imageURLs) {
-        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count and the adTitles'count is not the same.");
-    } else if (!imageURLs) {
-        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil."];
+        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count isn't equal to the adTitles'.");
+    } else if (!imageURLs || imageURLs.count < 1) {
+        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil and it's count must larger than 1."];
     } else if (!titles) {
         self.titles= nil;//purge title's array
     }
-    self.titles = titles;
+    self.titles = [titles copy];
     self.placeholderImage = [UIImage imageNamed:imageName];
     NSMutableArray *mutableArray = [NSMutableArray array];
     for (NSString *url in imageURLs) {
         NSURL *networkURL = [NSURL URLWithString:url];
         [mutableArray addObject:networkURL ? networkURL : [NSNull null]];
     }
-    [self setImageURLs:mutableArray];
-    [self setDotsShowStyle:dotsShowStyle];
-    if (self.autoScroll) {
-        [self scrollTimer];
-    }
-
+    [self setImageURLs:mutableArray adTitles:titles dotsShowStyle:dotsShowStyle];
 }
 
 - (void)setAutoScroll:(BOOL)autoScroll {
@@ -171,31 +158,38 @@ static CGFloat MaxLabelLength;
     }
 }
 
-- (void)setImageURLs:(NSArray *)imageURLs {
-    _urlArray = [imageURLs copy];
-    _leftImageIndex = _urlArray.count - 1;
+- (void)setImageURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles dotsShowStyle:(DotsShowStyle)dotsShowStyle {
+    self.urlArray = imageURLs;
+    self.titles = [titles copy];
+    _leftImageIndex = self.urlArray.count - 1;
     _centerImageIndex = 0;
     _rightImageIndex = 1;
-    if (_urlArray.count == 1) {
-        _rightImageIndex = 0;
-        _scrollView.contentSize = CGSizeMake(ADViewWidth, ADviewHeight);
-        [_centerImageView sd_setImageWithURL:_urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
+    if (self.urlArray.count == 1) {
+        _scrollView.contentSize = CGSizeMake(ImageViewWidth, ImageViewHeight);
+        [_leftImageView sd_setImageWithURL:self.urlArray[0] placeholderImage:self.placeholderImage];
         _autoScroll = NO;
-        return;
-    }
-    [_leftImageView sd_setImageWithURL:_urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
-    [_centerImageView sd_setImageWithURL:_urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
-    [_rightImageView sd_setImageWithURL:_urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
-
-    if (self.titles) {
-        _adTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, MaxLabelLength, 15)];
-        _adTitleLabel.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.04 alpha:0.3];
-        _adTitleLabel.textColor = [UIColor whiteColor];
-        _adTitleLabel.font = [UIFont boldSystemFontOfSize:12];
-        _adTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-        _adTitleLabel.text = _titles[_centerImageIndex];
-        [self addSubview:_adTitleLabel];
-        [self clipLabelBackground];
+    } else if (self.urlArray.count > 1){
+        [_leftImageView sd_setImageWithURL:self.urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
+        [_centerImageView sd_setImageWithURL:self.urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
+        [_rightImageView sd_setImageWithURL:self.urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
+        
+        [self setDotsShowStyle:dotsShowStyle];
+        
+        if (self.titles) {
+            _adTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, MaxLabelLength, 15)];
+            _adTitleLabel.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.04 alpha:0.3];
+            _adTitleLabel.textColor = [UIColor whiteColor];
+            _adTitleLabel.font = [UIFont boldSystemFontOfSize:12];
+            _adTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+            _adTitleLabel.text = _titles[_centerImageIndex];
+            [self addSubview:_adTitleLabel];
+            [self clipLabelBackground];
+        }
+        
+        if (self.autoScroll) {
+            [self scrollTimer];
+        }
+        
     }
     
 }
@@ -205,32 +199,32 @@ static CGFloat MaxLabelLength;
         return;
     }
     _dotsView = [[UIPageControl alloc] init];
-    _dotsView.numberOfPages = _urlArray.count;
+    _dotsView.numberOfPages = self.urlArray.count;
     
     switch (showStyle) {
         case DotsShowStyleNone:
             return;
             
         case DotsShowStyleLeft:
-            _dotsView.frame = CGRectMake(0, ADviewHeight - 20, _dotsView.numberOfPages * 20, 20);
+            _dotsView.frame = CGRectMake(0, ImageViewHeight - 20, _dotsView.numberOfPages * 20, 20);
             break;
             
         case DotsShowStyleCenter:
             _dotsView.frame = CGRectMake(0, 0, _dotsView.numberOfPages * 20, 20);
-            _dotsView.center = CGPointMake(ADViewWidth / 2.0, ADviewHeight - 20);
+            _dotsView.center = CGPointMake(ImageViewWidth / 2.0, ImageViewHeight - 20);
             break;
             
         case DotsShowStyleRight:
-            _dotsView.frame = CGRectMake(ADViewWidth -  _dotsView.numberOfPages * 20, ADviewHeight - 20, _dotsView.numberOfPages * 20, 20);
+            _dotsView.frame = CGRectMake(ImageViewWidth -  _dotsView.numberOfPages * 20, ImageViewHeight - 20, _dotsView.numberOfPages * 20, 20);
             break;
     }
 
-    _dotsView.currentPage = 0;
+    _dotsView.currentPage = _centerImageIndex;
     _dotsView.enabled = NO;
     [self addSubview:_dotsView];
 }
 
-#pragma mark - private method
+#pragma mark - private methods
 - (NSTimer *)scrollTimer {
     if (!_scrollTimer) {
         _scrollTimer = [NSTimer scheduledTimerWithTimeInterval:self.scrollInterval target:self selector:@selector(timeToScroll) userInfo:nil repeats:YES];
@@ -244,7 +238,7 @@ static CGFloat MaxLabelLength;
 }
 
 - (void)timeToScroll {
-    [_scrollView setContentOffset:CGPointMake(ADViewWidth * 2, 0) animated:YES];
+    [_scrollView setContentOffset:CGPointMake(ImageViewWidth * 2, 0) animated:YES];
     
 }
 
@@ -254,13 +248,13 @@ static CGFloat MaxLabelLength;
         _leftImageIndex++;
         _centerImageIndex++;
         _rightImageIndex++;
-        if (_leftImageIndex == _urlArray.count) {
+        if (_leftImageIndex == self.urlArray.count) {
             _leftImageIndex = 0;
         }
-        if (_centerImageIndex == _urlArray.count) {
+        if (_centerImageIndex == self.urlArray.count) {
             _centerImageIndex = 0;
         }
-        if (_rightImageIndex == _urlArray.count) {
+        if (_rightImageIndex == self.urlArray.count) {
             _rightImageIndex = 0;
         }
         
@@ -269,22 +263,22 @@ static CGFloat MaxLabelLength;
         _centerImageIndex--;
         _rightImageIndex--;
         if (_leftImageIndex == -1) {
-            _leftImageIndex = _urlArray.count - 1;
+            _leftImageIndex = self.urlArray.count - 1;
         }
         if (_centerImageIndex == -1) {
-            _centerImageIndex = _urlArray.count - 1;
+            _centerImageIndex = self.urlArray.count - 1;
         }
         if (_rightImageIndex == -1) {
-            _rightImageIndex = _urlArray.count - 1;
+            _rightImageIndex = self.urlArray.count - 1;
         }
     }
     
-    [_leftImageView sd_setImageWithURL:_urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
-    [_centerImageView sd_setImageWithURL:_urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
-    [_rightImageView sd_setImageWithURL:_urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
+    [_leftImageView sd_setImageWithURL:self.urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
+    [_centerImageView sd_setImageWithURL:self.urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
+    [_rightImageView sd_setImageWithURL:self.urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
     
     _dotsView.currentPage = _centerImageIndex;
-    _scrollView.contentOffset = CGPointMake(ADViewWidth, 0);
+    _scrollView.contentOffset = CGPointMake(ImageViewWidth, 0);
     _adTitleLabel.text = self.titles[_centerImageIndex];
     [self clipLabelBackground];
 }
@@ -306,13 +300,13 @@ static CGFloat MaxLabelLength;
 
 - (void)adViewItemTap {
     if (_tapCallBack) {
-        _tapCallBack(_centerImageIndex, _urlArray[_centerImageIndex]);
+        _tapCallBack(_centerImageIndex, self.urlArray[_centerImageIndex]);
     }
 }
 
 #pragma mark - UIScrollView Delegate
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    if (_scrollView.contentOffset.x == ADViewWidth * 2) {
+    if (_scrollView.contentOffset.x == ImageViewWidth * 2) {
         [self scrollToRight:YES];
     } else if(_scrollView.contentOffset.x == 0) {
         [self scrollToRight:NO];
