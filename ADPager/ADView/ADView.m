@@ -107,7 +107,7 @@ static CGFloat MaxLabelLength;
     if (titles && imageURLs) {
         NSAssert(titles.count == imageURLs.count, @"The imageURLs's count isn't equal to the adTitles'.");
     } else if (!imageURLs || imageURLs.count < 1) {
-        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil and it's count must larger than 1."];
+        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil and it's count must larger than 0."];
     } else if (!titles) {
         self.titles = nil;//purge title's array
     }
@@ -164,31 +164,31 @@ static CGFloat MaxLabelLength;
     _centerImageIndex = 0;
     _rightImageIndex = 1;
     if (self.urlArray.count == 1) {
-        _scrollView.contentSize = CGSizeMake(ImageViewWidth, ImageViewHeight);
-        [_leftImageView sd_setImageWithURL:self.urlArray[0] placeholderImage:self.placeholderImage];
+        [_centerImageView sd_setImageWithURL:self.urlArray[0] placeholderImage:self.placeholderImage];
+        _scrollView.scrollEnabled = NO;
         _autoScroll = NO;
-    } else if (self.urlArray.count > 1){
+    } else if (self.urlArray.count > 1) {
+        _scrollView.scrollEnabled = YES;
         [_leftImageView sd_setImageWithURL:self.urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
         [_centerImageView sd_setImageWithURL:self.urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
         [_rightImageView sd_setImageWithURL:self.urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
         
         [self setDotsShowStyle:dotsShowStyle];
         
-        if (self.titles) {
-            _adTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, MaxLabelLength, 15)];
-            _adTitleLabel.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.04 alpha:0.3];
-            _adTitleLabel.textColor = [UIColor whiteColor];
-            _adTitleLabel.font = [UIFont boldSystemFontOfSize:12];
-            _adTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-            _adTitleLabel.text = _titles[_centerImageIndex];
-            [self addSubview:_adTitleLabel];
-            [self clipLabelBackground];
-        }
-        
         if (self.autoScroll) {
             [self scrollTimer];
         }
         
+    }
+    if (self.titles) {
+        _adTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, MaxLabelLength, 15)];
+        _adTitleLabel.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.04 alpha:0.3];
+        _adTitleLabel.textColor = [UIColor whiteColor];
+        _adTitleLabel.font = [UIFont boldSystemFontOfSize:12];
+        _adTitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+        _adTitleLabel.text = _titles[_centerImageIndex];
+        [self addSubview:_adTitleLabel];
+        [self clipLabelBackground];
     }
     
 }
