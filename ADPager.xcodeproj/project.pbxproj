@@ -16,8 +16,8 @@
 		42CB945A1B7885F30091FED6 /* Image2.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 42CB94561B7885F30091FED6 /* Image2.jpg */; };
 		42CB945B1B7885F30091FED6 /* Image3.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 42CB94571B7885F30091FED6 /* Image3.jpg */; };
 		42CB945D1B78D2B40091FED6 /* rabbit.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 42CB945C1B78D2B40091FED6 /* rabbit.jpg */; };
+		B01D0CDF1BE9FF290039B668 /* ADView.m in Sources */ = {isa = PBXBuildFile; fileRef = B01D0CDE1BE9FF290039B668 /* ADView.m */; };
 		B04A5A901BE9AF8200A3491F /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = B04A5A8F1BE9AF8200A3491F /* Launch Screen.storyboard */; };
-		B04A5AE11BE9B19400A3491F /* ADView.m in Sources */ = {isa = PBXBuildFile; fileRef = B04A5A931BE9B19400A3491F /* ADView.m */; };
 		B04A5AE21BE9B19400A3491F /* MKAnnotationView+WebCache.m in Sources */ = {isa = PBXBuildFile; fileRef = B04A5A971BE9B19400A3491F /* MKAnnotationView+WebCache.m */; };
 		B04A5AE31BE9B19400A3491F /* NSData+ImageContentType.m in Sources */ = {isa = PBXBuildFile; fileRef = B04A5A991BE9B19400A3491F /* NSData+ImageContentType.m */; };
 		B04A5AE41BE9B19400A3491F /* SDImageCache.m in Sources */ = {isa = PBXBuildFile; fileRef = B04A5A9B1BE9B19400A3491F /* SDImageCache.m */; };
@@ -62,9 +62,9 @@
 		42CB94561B7885F30091FED6 /* Image2.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Image2.jpg; sourceTree = "<group>"; };
 		42CB94571B7885F30091FED6 /* Image3.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Image3.jpg; sourceTree = "<group>"; };
 		42CB945C1B78D2B40091FED6 /* rabbit.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = rabbit.jpg; sourceTree = "<group>"; };
+		B01D0CDD1BE9FF290039B668 /* ADView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADView.h; sourceTree = "<group>"; };
+		B01D0CDE1BE9FF290039B668 /* ADView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADView.m; sourceTree = "<group>"; };
 		B04A5A8F1BE9AF8200A3491F /* Launch Screen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = "Launch Screen.storyboard"; path = "../Launch Screen.storyboard"; sourceTree = "<group>"; };
-		B04A5A921BE9B19400A3491F /* ADView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ADView.h; sourceTree = "<group>"; };
-		B04A5A931BE9B19400A3491F /* ADView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ADView.m; sourceTree = "<group>"; };
 		B04A5A961BE9B19400A3491F /* MKAnnotationView+WebCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "MKAnnotationView+WebCache.h"; sourceTree = "<group>"; };
 		B04A5A971BE9B19400A3491F /* MKAnnotationView+WebCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "MKAnnotationView+WebCache.m"; sourceTree = "<group>"; };
 		B04A5A981BE9B19400A3491F /* NSData+ImageContentType.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSData+ImageContentType.h"; sourceTree = "<group>"; };
@@ -193,8 +193,8 @@
 		B04A5A911BE9B19400A3491F /* ADView */ = {
 			isa = PBXGroup;
 			children = (
-				B04A5A921BE9B19400A3491F /* ADView.h */,
-				B04A5A931BE9B19400A3491F /* ADView.m */,
+				B01D0CDD1BE9FF290039B668 /* ADView.h */,
+				B01D0CDE1BE9FF290039B668 /* ADView.m */,
 				B04A5A941BE9B19400A3491F /* ThirdParty */,
 			);
 			path = ADView;
@@ -368,10 +368,10 @@
 				B04A5AEB1BE9B19400A3491F /* UIButton+WebCache.m in Sources */,
 				B04A5AE21BE9B19400A3491F /* MKAnnotationView+WebCache.m in Sources */,
 				B04A5AE31BE9B19400A3491F /* NSData+ImageContentType.m in Sources */,
-				B04A5AE11BE9B19400A3491F /* ADView.m in Sources */,
 				B04A5AE91BE9B19400A3491F /* SDWebImageManager.m in Sources */,
 				B04A5AE61BE9B19400A3491F /* SDWebImageDecoder.m in Sources */,
 				B04A5AE41BE9B19400A3491F /* SDImageCache.m in Sources */,
+				B01D0CDF1BE9FF290039B668 /* ADView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

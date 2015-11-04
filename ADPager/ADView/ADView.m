@@ -53,8 +53,7 @@ static CGFloat MaxLabelLength;
         _scrollView.contentOffset = CGPointMake(ImageViewWidth, 0);
         _scrollView.contentSize = CGSizeMake(ImageViewWidth * 3, ImageViewHeight);
         _scrollView.delegate = self;
-        _scrollView.contentInset = UIEdgeInsetsZero;//This statement will change white dots position, if the container have navigation bar, declare this statement, contrary don't.
-        
+
         _scrollView.backgroundColor = [UIColor grayColor];
         
         _leftImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, ImageViewWidth, ImageViewHeight)];
