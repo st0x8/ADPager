@@ -5,6 +5,8 @@
 //  Created by lin on 15/8/9.
 //  Copyright (c) 2015年 Roy Lin. All rights reserved.
 //
+//  https://github.com/st0x8/ADPager
+//
 
 #import "ADView.h"
 #import "UIImageView+WebCache.h"
@@ -23,36 +25,28 @@ static CGFloat MaxLabelLength;
     UIPageControl *_dotsView;
     UILabel *_adTitleLabel;
     
-    NSTimer *_scrollTimer;
-    
     NSArray *_urlArray;
     NSArray *_titles;
     NSUInteger _leftImageIndex;
     NSUInteger _centerImageIndex;
     NSUInteger _rightImageIndex;
 
-    BOOL _isAutoScroll;
-
 }
 
 @property (nonatomic, strong) UIImage *placeholderImage;
 @property (nonatomic, strong) NSArray *titles;
+@property (nonatomic, strong) NSTimer *scrollTimer;
 @end
-
 
 @implementation ADView
 
-
-
 - (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
+    if (self = [super initWithFrame:frame]) {
         _scrollView = [[UIScrollView alloc] initWithFrame:self.bounds];
         
         ADViewWidth = _scrollView.bounds.size.width;
         ADviewHeight = _scrollView.bounds.size.height;
         MaxLabelLength = ADViewWidth * 0.6;
-        
         _scrollView.bounces = NO;
         _scrollView.showsHorizontalScrollIndicator = NO;
         _scrollView.showsVerticalScrollIndicator = NO;
@@ -60,7 +54,8 @@ static CGFloat MaxLabelLength;
         _scrollView.contentOffset = CGPointMake(ADViewWidth, 0);
         _scrollView.contentSize = CGSizeMake(ADViewWidth * 3, ADviewHeight);
         _scrollView.delegate = self;
-        _scrollView.contentInset = UIEdgeInsetsZero;//此语句会影响底部小白点的位置，如果应用上面有导航栏，就执行该语句，否则注释掉即可
+        _scrollView.contentInset = UIEdgeInsetsZero;//This statement will change white dots position, if the container have navigation bar, declare this statement, contrary don't.
+        
         _scrollView.backgroundColor = [UIColor grayColor];
         
         _leftImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, ADViewWidth, ADviewHeight)];
@@ -73,7 +68,7 @@ static CGFloat MaxLabelLength;
         _centerImageView.contentMode = UIViewContentModeScaleAspectFill;
         _centerImageView.autoresizingMask = UIViewAutoresizingFlexibleHeight;
         _centerImageView.clipsToBounds = YES;
-         _centerImageView.userInteractionEnabled = YES;
+        _centerImageView.userInteractionEnabled = YES;
         [_centerImageView addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(adViewItemTap)]];
         [_scrollView addSubview: _centerImageView];
         
@@ -84,76 +79,96 @@ static CGFloat MaxLabelLength;
         
         [self addSubview:_scrollView];
         
+        _autoScroll = YES;
+        _scrollInterval = 3;
     }
     return self;
 }
 
-#pragma mark - 获取 ADView 实例
+#pragma mark - get ADView instance
 + (instancetype)getADViewWithFrame:(CGRect)frame localImageURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles dotsShowStyle:(DotsShowStyle)dotsShowStyle {
     ADView *adView = [[ADView alloc] initWithFrame:frame];
-    if (titles && imageURLs) {
-        NSAssert(titles.count == imageURLs.count, @"图片数组的条目和标题数组的不一致");
-    } else if (!imageURLs) {
-        [NSException raise:@"ADViewInitialization" format:@"图片数组不能为空"];
-    } else if (!titles) {
-        adView.titles = nil;//清空标题数组
-    }
-    adView.titles = titles;
-    NSMutableArray *mutableArray = [NSMutableArray array];
-    for (NSString *imageName in imageURLs) {
-        NSString *path = [[NSBundle mainBundle] pathForResource:imageName ofType:nil];
-        NSAssert(path, @"找不到图片：%@", imageName);
-        NSURL *url = [NSURL fileURLWithPath:path];
-        [mutableArray addObject: url];
-    }
-    
-    [adView setImageURLs:mutableArray];
-    [adView setDotsShowStyle:dotsShowStyle];
-    [adView isAutoScroll:YES scrollInterval:3];
-    
+    [adView setLocalImageURLs:imageURLs adTitles:titles dotsShowStyle:dotsShowStyle];
     return adView;
 }
 
 + (instancetype)getADViewWithFrame:(CGRect)frame imageLinkURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles placeHolderImageName:(NSString *)imageName dotsShowStyle:(DotsShowStyle)dotsShowStyle {
     ADView *adView = [[ADView alloc] initWithFrame:frame];
+    [adView setImageLinkURLs:imageURLs adTitles:titles placeHolderImageName:imageName dotsShowStyle:dotsShowStyle];
+    return adView;
+}
+
+#pragma mark - prevent use init method
+- (instancetype)init {
+    [NSException raise:@"ADViewInitialization" format:@"Use getADViewWithFrame: or initWithFrame: , not init."];
+    return nil;
+}
+
+#pragma mark - public
+- (void)setLocalImageURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles dotsShowStyle:(DotsShowStyle)dotsShowStyle {
+
     if (titles && imageURLs) {
-        NSAssert(titles.count == imageURLs.count, @"图片数组的条目和标题数组的不一致");
+        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count and the adTitles'count is not the same.");
     } else if (!imageURLs) {
-        [NSException raise:@"ADViewInitialization" format:@"图片数组不能为空"];
+        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil."];
     } else if (!titles) {
-         adView.titles= nil;//清空标题数组
+        self.titles = nil;//purge title's array
     }
-    adView.titles = titles;
-    adView.placeholderImage = [UIImage imageNamed:imageName];
+    self.titles = titles;
+    NSMutableArray *mutableArray = [NSMutableArray array];
+    for (NSString *imageName in imageURLs) {
+        NSString *path = [[NSBundle mainBundle] pathForResource:imageName ofType:nil];
+        NSAssert(path, @"Can't find the image：%@", imageName);
+        NSURL *url = [NSURL fileURLWithPath:path];
+        [mutableArray addObject: url];
+    }
+    
+    [self setImageURLs:mutableArray];
+    [self setDotsShowStyle:dotsShowStyle];
+    if (self.autoScroll) {
+        [self scrollTimer];
+    }
+}
+
+- (void)setImageLinkURLs:(NSArray *)imageURLs adTitles:(NSArray *)titles placeHolderImageName:(NSString *)imageName dotsShowStyle:(DotsShowStyle)dotsShowStyle {
+    if (titles && imageURLs) {
+        NSAssert(titles.count == imageURLs.count, @"The imageURLs's count and the adTitles'count is not the same.");
+    } else if (!imageURLs) {
+        [NSException raise:@"ADViewInitialization" format:@"The imageURLs can't be nil."];
+    } else if (!titles) {
+        self.titles= nil;//purge title's array
+    }
+    self.titles = titles;
+    self.placeholderImage = [UIImage imageNamed:imageName];
     NSMutableArray *mutableArray = [NSMutableArray array];
     for (NSString *url in imageURLs) {
         NSURL *networkURL = [NSURL URLWithString:url];
         [mutableArray addObject:networkURL ? networkURL : [NSNull null]];
     }
-    [adView setImageURLs:mutableArray];
-    [adView setDotsShowStyle:dotsShowStyle];
-    [adView isAutoScroll:YES scrollInterval:3];
-    return adView;
-}
-
-#pragma mark - 阻止使用 init 方法
-- (instancetype)init {
-    [NSException raise:@"ADViewInitialization" format:@"Use getADViewWithFrame:, not init"];
-    return nil;
-}
-
-
-
-#pragma mark - public
-- (void)isAutoScroll:(BOOL)isScroll scrollInterval:(CGFloat)scrollInterval {
-    _scrollTime = scrollInterval;
-    _isAutoScroll = isScroll;
-    if (!isScroll || scrollInterval <= 0) {
-        [self setTimer:YES];
-        return;
+    [self setImageURLs:mutableArray];
+    [self setDotsShowStyle:dotsShowStyle];
+    if (self.autoScroll) {
+        [self scrollTimer];
     }
-    [self setTimer:NO];
-    
+
+}
+
+- (void)setAutoScroll:(BOOL)autoScroll {
+    if (autoScroll && autoScroll != _autoScroll) {
+        _autoScroll = autoScroll;
+        [self scrollTimer];
+    } else if (!autoScroll && autoScroll != _autoScroll) {
+        _autoScroll = autoScroll;
+        [self destroyTimer];
+    }
+}
+
+- (void)setScrollInterval:(float)scrollInterval {
+    if (_autoScroll && scrollInterval != _scrollInterval) {
+        _scrollInterval = scrollInterval;
+        [self destroyTimer];
+        [self scrollTimer];
+    }
 }
 
 - (void)setImageURLs:(NSArray *)imageURLs {
@@ -165,12 +180,13 @@ static CGFloat MaxLabelLength;
         _rightImageIndex = 0;
         _scrollView.contentSize = CGSizeMake(ADViewWidth, ADviewHeight);
         [_centerImageView sd_setImageWithURL:_urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
-        [self isAutoScroll:NO scrollInterval:0];
+        _autoScroll = NO;
         return;
     }
     [_leftImageView sd_setImageWithURL:_urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
     [_centerImageView sd_setImageWithURL:_urlArray[_centerImageIndex] placeholderImage:self.placeholderImage];
     [_rightImageView sd_setImageWithURL:_urlArray[_rightImageIndex] placeholderImage:self.placeholderImage];
+
     if (self.titles) {
         _adTitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 8, MaxLabelLength, 15)];
         _adTitleLabel.backgroundColor = [UIColor colorWithRed:0.04 green:0.04 blue:0.04 alpha:0.3];
@@ -214,44 +230,26 @@ static CGFloat MaxLabelLength;
     [self addSubview:_dotsView];
 }
 
-#pragma mark - 设置 _adTitleLabel 的背景宽度
-- (void)clipLabelBackground {
-    CGRect rect = _adTitleLabel.frame;
-    float textLength = _adTitleLabel.intrinsicContentSize.width;
-    if (textLength >= MaxLabelLength && rect.size.width != MaxLabelLength) {
-        rect.size.width = MaxLabelLength;
-        _adTitleLabel.frame = rect;
-    } else if (rect.size.width != textLength && textLength < MaxLabelLength) {
-        rect.size.width = textLength;
-        _adTitleLabel.frame = rect;
+#pragma mark - private method
+- (NSTimer *)scrollTimer {
+    if (!_scrollTimer) {
+        _scrollTimer = [NSTimer scheduledTimerWithTimeInterval:self.scrollInterval target:self selector:@selector(timeToScroll) userInfo:nil repeats:YES];
     }
-
+    return _scrollTimer;
 }
-- (void)setTimer:(BOOL)isDestroy {
-    if (!isDestroy) {
-        _scrollTimer = [NSTimer scheduledTimerWithTimeInterval:_scrollTime target:self selector:@selector(timeToScroll) userInfo:nil repeats:YES];
 
-    } else {
-        [_scrollTimer invalidate];
-        _scrollTimer = nil;
-    }
+- (void)destroyTimer{
+    [_scrollTimer invalidate];
+    _scrollTimer = nil;
 }
 
 - (void)timeToScroll {
     [_scrollView setContentOffset:CGPointMake(ADViewWidth * 2, 0) animated:YES];
-    //切换到右边的图片 Inverval 值 小于0.4小白点和标题滚动会出现延迟
-    [NSTimer scheduledTimerWithTimeInterval:0.4f target:self selector:@selector(scrollViewDidEndDecelerating:) userInfo:nil repeats:NO];
+    
 }
 
-- (void)adViewItemTap {
-    if (_tapCallBack) {
-        _tapCallBack(_centerImageIndex, _urlArray[_centerImageIndex]);
-    }
-}
-
-#pragma mark - UIScrollView Delegate
-- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
-    if (_scrollView.contentOffset.x == ADViewWidth * 2) {
+- (void)scrollToRight:(BOOL)isRight {
+    if (isRight) {
         
         _leftImageIndex++;
         _centerImageIndex++;
@@ -266,7 +264,7 @@ static CGFloat MaxLabelLength;
             _rightImageIndex = 0;
         }
         
-    } else if(_scrollView.contentOffset.x == 0) {
+    } else {
         _leftImageIndex--;
         _centerImageIndex--;
         _rightImageIndex--;
@@ -279,8 +277,6 @@ static CGFloat MaxLabelLength;
         if (_rightImageIndex == -1) {
             _rightImageIndex = _urlArray.count - 1;
         }
-    }else {
-        return;
     }
     
     [_leftImageView sd_setImageWithURL:_urlArray[_leftImageIndex] placeholderImage:self.placeholderImage];
@@ -291,19 +287,55 @@ static CGFloat MaxLabelLength;
     _scrollView.contentOffset = CGPointMake(ADViewWidth, 0);
     _adTitleLabel.text = self.titles[_centerImageIndex];
     [self clipLabelBackground];
+}
+
+
+//Set _adTitleLabel's backgound dynamically.
+- (void)clipLabelBackground {
+    CGRect rect = _adTitleLabel.frame;
+    float textLength = _adTitleLabel.intrinsicContentSize.width;
+    if (textLength >= MaxLabelLength && rect.size.width != MaxLabelLength) {
+        rect.size.width = MaxLabelLength;
+        _adTitleLabel.frame = rect;
+    } else if (rect.size.width != textLength && textLength < MaxLabelLength) {
+        rect.size.width = textLength;
+        _adTitleLabel.frame = rect;
+    }
 
 }
 
+- (void)adViewItemTap {
+    if (_tapCallBack) {
+        _tapCallBack(_centerImageIndex, _urlArray[_centerImageIndex]);
+    }
+}
+
+#pragma mark - UIScrollView Delegate
+- (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView {
+    if (_scrollView.contentOffset.x == ADViewWidth * 2) {
+        [self scrollToRight:YES];
+    } else if(_scrollView.contentOffset.x == 0) {
+        [self scrollToRight:NO];
+    }else {
+        return;
+    }
+}
+
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
-    if (_isAutoScroll) {
-        [self setTimer:YES];
+    if (self.autoScroll) {
+        [self destroyTimer];
     }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate {
-    if (_isAutoScroll) {
-        [self setTimer:NO];
+    if (self.autoScroll) {
+        [self scrollTimer];
     }
+}
+
+//Tells the delegate when a scrolling animation in the scroll view concludes.This method call after send "setContentOffset: animated:".
+- (void)scrollViewDidEndScrollingAnimation:(UIScrollView *)scrollView {
+    [self scrollToRight:YES];
 }
 
 @end
